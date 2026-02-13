@@ -1,33 +1,22 @@
 from django.db import models
 
-
 class Race(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(blank=True)  # Pode ser vazio (blank)
-
+    description = models.TextField(blank=True)
 
 class Skill(models.Model):
     name = models.CharField(max_length=255, unique=True)
     bonus = models.CharField(max_length=255)
-    # Se a Race for deletada, a Skill também é (CASCADE)
-    race = models.ForeignKey(Race, on_delete=models.CASCADE)
-
+    race = models.ForeignKey(Race, on_delete=models.CASCADE, related_name='skills')
 
 class Guild(models.Model):
     name = models.CharField(max_length=255, unique=True)
-    description = models.TextField(null=True)  # O requisito diz especificamente "pode ser null"
-
+    description = models.TextField(null=True)
 
 class Player(models.Model):
     nickname = models.CharField(max_length=255, unique=True)
-    email = models.EmailField(max_length=255)  # EmailField é melhor, mas CharField aceita também
+    email = models.EmailField(max_length=255)
     bio = models.CharField(max_length=255)
-
-    # Se Race for deletada, Player é deletado
-    race = models.ForeignKey(Race, on_delete=models.CASCADE)
-
-    # Se Guild for deletada, Player NÃO é deletado (SET_NULL).
-    # null=True é obrigatório aqui para permitir que o campo fique vazio.
-    guild = models.ForeignKey(Guild, on_delete=models.SET_NULL, null=True)
-
+    race = models.ForeignKey(Race, on_delete=models.CASCADE, related_name='players')
+    guild = models.ForeignKey(Guild, on_delete=models.SET_NULL, null=True, related_name='members')
     created_at = models.DateTimeField(auto_now_add=True)

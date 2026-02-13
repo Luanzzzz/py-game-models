@@ -7,46 +7,55 @@ def main():
         data = json.load(file)
 
     for player_data in data:
-        # 1. Lidar com a Raça (Race)
-        # O get_or_create retorna (objeto, created_boolean). Pegamos o índice [0].
-        race_data = player_data['race']
+        race_data = player_data.get('race')
+        if not race_data or not race_data.get('name'):
+            raise ValueError("Dados da raca ou nome ausentes.")
+
         race_obj, _ = Race.objects.get_or_create(
-            name=race_data['name'],
+            name=race_data.get('name'),
             defaults={'description': race_data.get('description', '')}
         )
 
-        # 2. Lidar com as Skills (dentro da Raça)
-        # Iteramos sobre a lista de skills dentro dos dados da raça
         for skill_data in race_data.get('skills', []):
+            skill_name = skill_data.get('name')
+            skill_bonus = skill_data.get('bonus')
+            if not skill_name or not skill_bonus:
+                raise ValueError("Nome ou bonus da skill ausentes.")
+
             Skill.objects.get_or_create(
-                name=skill_data['name'],
+                name=skill_name,
                 defaults={
-                    'bonus': skill_data['bonus'],
-                    'race': race_obj  # Ligamos a skill à raça criada acima
+                    'bonus': skill_bonus,
+                    'race': race_obj
                 }
             )
 
-        # 3. Lidar com a Guilda (Guild)
-        guild_data = player_data['guild']
+        guild_data = player_data.get('guild')
         guild_obj = None
 
-        # Verificação de segurança caso o jogador não tenha guilda no JSON
         if guild_data:
+            guild_name = guild_data.get('name')
+            if not guild_name:
+                raise ValueError("Nome da guilda ausente.")
             guild_obj, _ = Guild.objects.get_or_create(
-                name=guild_data['name'],
+                name=guild_name,
                 defaults={'description': guild_data.get('description')}
             )
 
-        # 4. Criar o Player
-        # Aqui usamos create() ou get_or_create() para o player.
-        # Como o nickname é unique, get_or_create é mais seguro se rodar o script 2 vezes.
+        nickname = player_data.get('nickname')
+        email = player_data.get('email')
+        bio = player_data.get('bio')
+
+        if not nickname or not email or not bio:
+            raise ValueError("Nickname, email ou bio do jogador ausentes.")
+
         Player.objects.get_or_create(
-            nickname=player_data['nickname'],
+            nickname=nickname,
             defaults={
-                'email': player_data['email'],
-                'bio': player_data['bio'],
-                'race': race_obj,  # Objeto Race obtido no passo 1
-                'guild': guild_obj  # Objeto Guild obtido no passo 3
+                'email': email,
+                'bio': bio,
+                'race': race_obj,
+                'guild': guild_obj
             }
         )
 
